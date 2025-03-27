@@ -1,14 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from transformers import T5ForConditionalGeneration, T5Tokenizer
-import nltk
+import requests
 import random
+import nltk
 from nltk.tokenize import sent_tokenize
 import re
+import os
 
-# Load the NLP Model for Question Generation
-tokenizer = T5Tokenizer.from_pretrained("ramsrigouthamg/t5_squad_v1")
-model = T5ForConditionalGeneration.from_pretrained("ramsrigouthamg/t5_squad_v1")
+# Set up Hugging Face API key (replace YOUR_HUGGINGFACE_API_KEY with your actual API key)
+HF_API_KEY = "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"
+HF_API_URL = "https://api-inference.huggingface.co/models/ramsrigouthamg/t5_squad_v1"
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -32,12 +33,20 @@ def extract_key_phrases(text):
     # Get distinct meaningful key phrases
     return list(set(key_phrases))
 
-# Function to generate questions dynamically
+# Function to generate questions dynamically using Hugging Face API
 def generate_question(context, answer):
     input_text = f"generate question: {answer} context: {context}"
-    input_ids = tokenizer.encode(input_text, return_tensors="pt")
-    output = model.generate(input_ids)
-    question = tokenizer.decode(output[0], skip_special_tokens=True)
+    payload = {"inputs": input_text}
+    headers = {
+        "Authorization": f"Bearer {HF_API_KEY}"
+    }
+    
+    response = requests.post(HF_API_URL, json=payload, headers=headers)
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail="Error from Hugging Face API")
+    
+    question = response.json()[0]['generated_text']
     return question
 
 # Generate MCQs and Fill-in-the-Blanks
