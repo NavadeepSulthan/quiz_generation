@@ -3,27 +3,33 @@ from pydantic import BaseModel
 import requests
 import random
 import nltk
-from nltk.tokenize import sent_tokenize, word_tokenize
+import os
 import re
+from nltk.tokenize import sent_tokenize, word_tokenize
 
-# Ensure necessary NLTK resources are downloaded
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('stopwords')
-nltk.download('omw-1.4')
+# ✅ Set NLTK Data Path (Fixes Render Issue)
+NLTK_DATA_PATH = "/opt/render/nltk_data"
+os.makedirs(NLTK_DATA_PATH, exist_ok=True)
+nltk.data.path.append(NLTK_DATA_PATH)
 
-# Set up Hugging Face API key (replace with your actual key)
+# ✅ Ensure all required NLTK resources are downloaded
+nltk.download('punkt', download_dir=NLTK_DATA_PATH)
+nltk.download('averaged_perceptron_tagger', download_dir=NLTK_DATA_PATH)
+nltk.download('stopwords', download_dir=NLTK_DATA_PATH)
+nltk.download('omw-1.4', download_dir=NLTK_DATA_PATH)
+
+# Hugging Face API Setup
 HF_API_KEY = "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"
 HF_API_URL = "https://api-inference.huggingface.co/models/ramsrigouthamg/t5_squad_v1"
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Define the input format using Pydantic
+# Define Input Model
 class QuizInput(BaseModel):
     text: str
 
-# Extract key phrases (answers) from text
+# Extract key phrases from text
 def extract_key_phrases(text):
     sentences = sent_tokenize(text)
     key_phrases = set()
@@ -34,7 +40,7 @@ def extract_key_phrases(text):
 
     return list(key_phrases)
 
-# Function to generate questions dynamically using Hugging Face API
+# Generate questions using Hugging Face API
 def generate_question(context, answer):
     input_text = f"generate question: {answer} context: {context}"
     payload = {"inputs": input_text}
