@@ -1,4 +1,8 @@
-fastapi 
-uvicorn 
+fastapi
+uvicorn
 requests
 nltk
+reportlab
+smtplib
+email
+python-dotenv
