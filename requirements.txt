@@ -1,6 +1,1 @@
-fastapi
-uvicorn
-requests
-nltk
-reportlab
-python-dotenv
+!pip install google-generativeai
