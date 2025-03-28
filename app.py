@@ -30,15 +30,18 @@ def generate_quiz(summary_text):
       ]
     }}
     """
-    
+
     response = model.generate_content(prompt)
 
     try:
-        # Extract JSON response
-        json_text = response.text.strip().split("```json")[-1].split("```")[0].strip()
+        # Extract JSON safely
+        json_start = response.text.find("{")
+        json_end = response.text.rfind("}")
+        json_text = response.text[json_start:json_end+1]  # Extract JSON part
+
         quiz_json = json.loads(json_text)
-    except json.JSONDecodeError:
-        quiz_json = {"error": "Invalid JSON response from API"}
+    except Exception as e:
+        quiz_json = {"error": f"Invalid JSON response from API: {str(e)}"}
     
     return quiz_json
 
@@ -46,7 +49,7 @@ def generate_quiz(summary_text):
 @app.route('/generate_quiz', methods=['POST'])
 def quiz_endpoint():
     data = request.get_json()
-    summary_text = data.get("summary", "")
+    summary_text = data.get("summary", "").strip()
 
     if not summary_text:
         return jsonify({"error": "Summary text is required"}), 400
@@ -56,4 +59,4 @@ def quiz_endpoint():
 
 # Run Flask server
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)
